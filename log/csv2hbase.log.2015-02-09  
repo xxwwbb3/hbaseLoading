@@ -1,0 +1,14 @@
+15/02/09 22:19:34 INFO hbase.HbaseMainApp: ......   put CSV to HBASE   begin     ......
+ 15/02/09 22:19:34 INFO hbase.HbaseMainApp: config path = [/home/xwb/wk_java/csv2hbase/code/etc].
+ 15/02/09 22:19:34 INFO config.HbaseContext: getInstance()
+ 15/02/09 22:19:34 INFO config.HbaseContext: HbaseContext construct.
+ 15/02/09 22:19:34 INFO config.HbaseContext: init() BEGIN
+ 15/02/09 22:19:34 INFO xml.SourceDataConfig: SourceDataConfig construct
+ 15/02/09 22:19:36 INFO util.IniConfig: Init ini conifg file.
+ 15/02/09 22:19:36 INFO config.HbaseContext: init() END
+ 15/02/09 22:19:36 INFO Scheduling.Scheduling: inputDir = /home/xwb/test/data
+ 15/02/09 22:19:36 INFO Scheduling.Scheduling: threadNum = 3
+ 15/02/09 22:19:36 INFO Scheduling.Scheduling: fileNameFilter = .DAT
+ 15/02/09 22:19:36 INFO Scheduling.Scheduling: findFileInterval = 6000
+ 15/02/09 22:19:36 INFO Scheduling.Scheduling: ls cmd[ls -tr /home/xwb/test/data/*.DAT | head -100]
+ 

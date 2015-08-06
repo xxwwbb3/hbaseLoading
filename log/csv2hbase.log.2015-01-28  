@@ -1,0 +1,67 @@
+15/01/28 18:48:14 INFO hbase.HbaseMainApp: ......   put CSV to HBASE   begin     ......
+ 15/01/28 18:48:14 INFO hbase.HbaseMainApp: config path = [/home/xwb/wk_java/csv2hbase/code/etc].
+ 15/01/28 18:48:14 INFO config.HbaseContext: getInstance()
+ 15/01/28 18:48:14 INFO config.HbaseContext: HbaseContext construct.
+ 15/01/28 18:48:14 INFO config.HbaseContext: init() BEGIN
+ 15/01/28 18:48:14 INFO xml.SourceDataConfig: SourceDataConfig construct
+ 15/01/28 18:48:16 INFO util.IniConfig: Init ini conifg file.
+ 15/01/28 18:48:16 INFO config.HbaseContext: init() END
+ 15/01/28 18:48:16 INFO Scheduling.Scheduling: inputDir = /home/xwb/test/data
+ 15/01/28 18:48:16 INFO Scheduling.Scheduling: threadNum = 3
+ 15/01/28 18:48:16 INFO Scheduling.Scheduling: fileNameFilter = .DAT
+ 15/01/28 18:48:16 INFO Scheduling.Scheduling: findFileInterval = 6000
+ 15/01/28 18:48:16 INFO Scheduling.Scheduling: ls cmd[ls -tr /home/xwb/test/data/*.DAT | head -100]
+ 15/01/28 18:48:16 INFO Scheduling.Scheduling: add filename: 12-gbiups2gpaging-ps.DAT success
+ 15/01/28 18:48:16 INFO ExecuteOperator.ThreadExecuter: outputDir = /home/xwb/test/databak/
+ 15/01/28 18:48:16 INFO ExecuteOperator.ThreadExecuter: errorDir = /home/xwb/test/databak/
+ 15/01/28 18:48:16 INFO hbase.HbaseOperator: HbaseOperator static begin:
+ 15/01/28 18:48:16 INFO hbase.HbaseOperator: hbaseBatchSize = 5000
+ 15/01/28 18:48:17 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:zookeeper.version=3.4.5-cdh5.1.0--1, built on 07/12/2014 13:39 GMT
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:host.name=localhost
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:java.version=1.7.0_45
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:java.vendor=Oracle Corporation
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:java.home=/home/xwb/work/java/jre
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:java.class.path=/home/xwb/wk_java/csv2hbase/code/bin:/home/xwb/wk_java/csv2hbase/code/lib/commons-cli-1.2.jar:/home/xwb/wk_java/csv2hbase/code/lib/commons-codec-1.8.jar:/home/xwb/wk_java/csv2hbase/code/lib/commons-collections-3.2.1.jar:/home/xwb/wk_java/csv2hbase/code/lib/commons-configuration-1.6.jar:/home/xwb/wk_java/csv2hbase/code/lib/commons-lang-2.6.jar:/home/xwb/wk_java/csv2hbase/code/lib/commons-logging.jar:/home/xwb/wk_java/csv2hbase/code/lib/csv2hbase.jar:/home/xwb/wk_java/csv2hbase/code/lib/dom4j-1.6.1.jar:/home/xwb/wk_java/csv2hbase/code/lib/guava-11.0.2.jar:/home/xwb/wk_java/csv2hbase/code/lib/hadoop-auth-2.3.0-cdh5.1.0.jar:/home/xwb/wk_java/csv2hbase/code/lib/hadoop-common-2.3.0-cdh5.1.0.jar:/home/xwb/wk_java/csv2hbase/code/lib/hadoop-hdfs-2.3.0-cdh5.1.0.jar:/home/xwb/wk_java/csv2hbase/code/lib/hbase-client-0.98.1-cdh5.1.0.jar:/home/xwb/wk_java/csv2hbase/code/lib/hbase-common-0.98.1-cdh5.1.0.jar:/home/xwb/wk_java/csv2hbase/code/lib/hbase-protocol-0.98.1-cdh5.1.0.jar:/home/xwb/wk_java/csv2hbase/code/lib/htrace-core.jar:/home/xwb/wk_java/csv2hbase/code/lib/jackson-core-asl-1.9.12.jar:/home/xwb/wk_java/csv2hbase/code/lib/jackson-mapper-asl-1.9.12.jar:/home/xwb/wk_java/csv2hbase/code/lib/log4j-1.2.17.jar:/home/xwb/wk_java/csv2hbase/code/lib/netty-3.6.2.Final.jar:/home/xwb/wk_java/csv2hbase/code/lib/protobuf-java-2.5.0.jar:/home/xwb/wk_java/csv2hbase/code/lib/slf4j-api-1.7.5.jar:/home/xwb/wk_java/csv2hbase/code/lib/slf4j-log4j12-1.7.5.jar:/home/xwb/wk_java/csv2hbase/code/lib/zookeeper.jar:/home/xwb/wk_java/csv2hbase/deploy/CSV2HBASE-1.0.jar
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:java.library.path=/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:java.io.tmpdir=/tmp
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:java.compiler=<NA>
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:os.name=Linux
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:os.arch=amd64
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:os.version=3.2.0-73-generic
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:user.name=xwb
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:user.home=/home/xwb
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Client environment:user.dir=/home/xwb/wk_java/csv2hbase
+ 15/01/28 18:48:17 INFO zookeeper.ZooKeeper: Initiating client connection, connectString=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181 sessionTimeout=60000 watcher=hconnection-0x31eb789e, quorum=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181, baseZNode=/hbase
+ 15/01/28 18:48:17 INFO zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x31eb789e connecting to ZooKeeper ensemble=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181
+ 15/01/28 18:48:17 INFO zookeeper.ClientCnxn: Opening socket connection to server dlxa-104/172.16.40.104:2181. Will not attempt to authenticate using SASL (unknown error)
+ 15/01/28 18:48:17 INFO zookeeper.ClientCnxn: Socket connection established to dlxa-104/172.16.40.104:2181, initiating session
+ 15/01/28 18:48:17 INFO zookeeper.ClientCnxn: Session establishment complete on server dlxa-104/172.16.40.104:2181, sessionid = 0x24b24c259a714c1, negotiated timeout = 60000
+ 15/01/28 18:48:18 INFO zookeeper.ZooKeeper: Initiating client connection, connectString=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181 sessionTimeout=60000 watcher=catalogtracker-on-hconnection-0x31eb789e, quorum=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181, baseZNode=/hbase
+ 15/01/28 18:48:18 INFO zookeeper.RecoverableZooKeeper: Process identifier=catalogtracker-on-hconnection-0x31eb789e connecting to ZooKeeper ensemble=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Opening socket connection to server dlxa-105/172.16.40.105:2181. Will not attempt to authenticate using SASL (unknown error)
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Socket connection established to dlxa-105/172.16.40.105:2181, initiating session
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Session establishment complete on server dlxa-105/172.16.40.105:2181, sessionid = 0x44b24c25a6014ea, negotiated timeout = 60000
+ 15/01/28 18:48:18 INFO Configuration.deprecation: hadoop.native.lib is deprecated. Instead, use io.native.lib.available
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: EventThread shut down
+ 15/01/28 18:48:18 INFO zookeeper.ZooKeeper: Session: 0x44b24c25a6014ea closed
+ 15/01/28 18:48:18 INFO zookeeper.ZooKeeper: Initiating client connection, connectString=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181 sessionTimeout=60000 watcher=catalogtracker-on-hconnection-0x31eb789e, quorum=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181, baseZNode=/hbase
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Opening socket connection to server dlxa-104/172.16.40.104:2181. Will not attempt to authenticate using SASL (unknown error)
+ 15/01/28 18:48:18 INFO zookeeper.RecoverableZooKeeper: Process identifier=catalogtracker-on-hconnection-0x31eb789e connecting to ZooKeeper ensemble=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Socket connection established to dlxa-104/172.16.40.104:2181, initiating session
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Session establishment complete on server dlxa-104/172.16.40.104:2181, sessionid = 0x24b24c259a714c2, negotiated timeout = 60000
+ 15/01/28 18:48:18 INFO zookeeper.ZooKeeper: Session: 0x24b24c259a714c2 closed
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: EventThread shut down
+ 15/01/28 18:48:18 INFO zookeeper.ZooKeeper: Initiating client connection, connectString=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181 sessionTimeout=60000 watcher=hconnection-0x2c62a5dd, quorum=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181, baseZNode=/hbase
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Opening socket connection to server dlxa-104/172.16.40.104:2181. Will not attempt to authenticate using SASL (unknown error)
+ 15/01/28 18:48:18 INFO zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x2c62a5dd connecting to ZooKeeper ensemble=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Socket connection established to dlxa-104/172.16.40.104:2181, initiating session
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Session establishment complete on server dlxa-104/172.16.40.104:2181, sessionid = 0x24b24c259a714c3, negotiated timeout = 60000
+ 15/01/28 18:48:18 INFO zookeeper.ZooKeeper: Initiating client connection, connectString=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181 sessionTimeout=60000 watcher=hconnection-0x49e6b85b, quorum=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181, baseZNode=/hbase
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Opening socket connection to server dlxa-104/172.16.40.104:2181. Will not attempt to authenticate using SASL (unknown error)
+ 15/01/28 18:48:18 INFO zookeeper.RecoverableZooKeeper: Process identifier=hconnection-0x49e6b85b connecting to ZooKeeper ensemble=dlxa-103:2181,dlxa-104:2181,dlxa-105:2181
+ 15/01/28 18:48:18 INFO zookeeper.ClientCnxn: Socket connection established to dlxa-104/172.16.40.104:2181, initiating session
+ 15/01/28 18:48:19 INFO zookeeper.ClientCnxn: Session establishment complete on server dlxa-104/172.16.40.104:2181, sessionid = 0x24b24c259a714c4, negotiated timeout = 60000
+ 15/01/28 18:48:19 INFO hbase.HbaseOperator: HbaseOperator static end!
+ 15/01/28 18:48:19 INFO hbase.HbaseOperator: complete filename: 12-gbiups2gpaging-ps.DAT [totalLine: 3 sucessLine: 3 fileSize: 0M costTime: 0 s]
+ 

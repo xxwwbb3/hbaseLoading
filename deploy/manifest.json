@@ -1,0 +1,10 @@
+{
+    "parcels": [
+        {
+          "parcelName": "csv2hbase-1.0.1-el6.parcel",
+          "hash": "c239a756d0f4dc05725a22acb87b6ab85363cf68",
+          "components": []
+        }
+      ],
+    "lastUpdated": 1421738777
+}

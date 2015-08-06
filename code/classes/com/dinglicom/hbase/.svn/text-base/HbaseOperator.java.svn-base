@@ -1,0 +1,431 @@
+package com.dinglicom.hbase;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Durability;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.util.Time;
+import org.apache.log4j.Logger;
+
+import com.dinglicom.clouder.util.IniConfig;
+import com.dinglicom.clouder.util.StringUtil;
+import com.dinglicom.clouder.xml.CFNode;
+import com.dinglicom.clouder.xml.CQNode;
+import com.dinglicom.clouder.xml.FieldNode;
+import com.dinglicom.clouder.xml.FieldNode.Option;
+import com.dinglicom.clouder.xml.ConstString;
+import com.dinglicom.clouder.xml.HbaseTableConfig;
+import com.dinglicom.clouder.xml.IndexNode;
+import com.dinglicom.clouder.xml.RowKey;
+import com.dinglicom.clouder.xml.SourceDataConfig;
+import com.dinglicom.clouder.xml.SourceDataNode;
+import com.dinglicom.clouder.xml.SourceDataTypeNode;
+import com.dinglicom.clouder.xml.TimeStamp;
+import com.dinglicom.config.HbaseContext;
+
+public class HbaseOperator {
+	private final static Logger LOG = Logger.getLogger(HbaseOperator.class);
+	private static final int BATCH_SIZE;
+
+	private static HBaseAdmin m_hbase_admin = null;
+	private static HTableInterface m_mainTable = null;
+	private static HTableInterface m_indexTable = null;
+	private static Configuration m_hbaseconfiguration = null;
+	// 配置信息上下文
+	private static HbaseContext m_hbaseContext = null;
+	// 源数据定义配置文件
+	private static SourceDataConfig m_sourceDataConf = null;
+	// hbase 元数据配置文件
+	private static HbaseTableConfig m_hbaseConfig = null;
+	// 常量配置文件
+	private static IniConfig m_constIni = null;
+	private static Durability m_wal = Durability.USE_DEFAULT;
+	private static Boolean m_autoFulsh = false;
+	private static String mainTableName = null;
+	private static String indexTableName = null;
+
+	/*
+	 * 类初始化静态加载模块
+	 */
+	static {
+		LOG.info("HbaseOperator static begin:");
+		m_hbaseconfiguration = HBaseConfiguration.create();
+		assert(m_hbaseconfiguration != null);
+		m_hbaseContext = HbaseContext.getInstance();
+		assert(m_hbaseContext != null);
+		m_sourceDataConf = m_hbaseContext.getSourceDataConf();
+		assert(m_sourceDataConf != null);
+		m_hbaseConfig = m_hbaseContext.getHbaseDefine();
+		assert(m_hbaseConfig != null);
+		m_constIni = m_hbaseContext.getConstIni();
+		assert(m_constIni != null);
+		
+		mainTableName = m_hbaseConfig.getMainTableName();
+		indexTableName = m_hbaseConfig.getIndexTableName();
+		
+		int walType = Integer.valueOf(m_hbaseContext.getSystemConfigIni().getValue(
+				ConstString.HBASE_WAL));
+		if (walType < 1 || walType > 5) {
+			LOG.error("wal config must is [1 ~ 5] ! yours is " + walType);
+		}
+		switch (walType) {
+		case 1 :
+			m_wal = Durability.ASYNC_WAL;
+			break;
+		case 2 :
+			m_wal = Durability.FSYNC_WAL;
+			break;
+		case 3 :
+			m_wal = Durability.SKIP_WAL;
+			break;
+		case 4 :
+			m_wal = Durability.SYNC_WAL;
+			break;
+		case 5 :
+			m_wal = Durability.USE_DEFAULT;
+			break;
+		default :
+			m_wal = Durability.USE_DEFAULT;
+		}
+		
+//		m_autoFulsh = Boolean.valueOf(m_hbaseContext.getSystemConfigIni().getValue(
+//				ConstString.HBASE_AUTO_FLUSH));
+		LOG.info("++++++++++++    m_wal = " + walType);
+		LOG.info("++++++++++++    m_autoFulsh = " + m_autoFulsh);
+		
+		BATCH_SIZE = Integer.valueOf(m_hbaseContext.getSystemConfigIni().getValue(
+				ConstString.HBASE_BATCH_SIZE));
+		if (0 > BATCH_SIZE  || Integer.MAX_VALUE < BATCH_SIZE) {
+			LOG.error(ConstString.HBASE_BATCH_SIZE + "=" + BATCH_SIZE + " is not illegal!");
+		}
+		LOG.info(ConstString.HBASE_BATCH_SIZE + " = " + BATCH_SIZE);
+		try {
+			m_hbase_admin = new HBaseAdmin(m_hbaseconfiguration);
+			if (!m_hbase_admin.tableExists(mainTableName)) {
+				LOG.error(mainTableName + " is not exists!");
+			}
+			if (!m_hbase_admin.tableExists(indexTableName)) {
+				LOG.error(indexTableName + " is not exists!");
+			}
+			LOG.info(" ------------   mainTableName = " + mainTableName);
+			m_mainTable = HConnectionManager.createConnection(m_hbaseconfiguration)
+					.getTable(mainTableName);
+			LOG.info(" ------------   indexTableName = " + indexTableName);
+			m_indexTable = HConnectionManager.createConnection(m_hbaseconfiguration)
+					.getTable(indexTableName);
+			m_mainTable.setAutoFlush(m_autoFulsh, true);
+			m_indexTable.setAutoFlush(m_autoFulsh, true);
+		} catch (IOException e) {
+			LOG.error(" static init error!", e);
+		}
+		LOG.info("HbaseOperator static end!");
+	}
+
+	/*
+	 * 主要的处理逻辑方法
+	 * 参数 1 fullPahtFileName：要处理的文件名（绝对路径）
+	 * 返回值：成功与否
+	 */
+	public static boolean process(final String fullPahtFileName) {
+		LOG.debug("process file: " + fullPahtFileName);
+		long startTime = Time.now();
+		List<Row> mainList = new ArrayList<Row>(BATCH_SIZE);
+		List<Row> indexList = new ArrayList<Row>(BATCH_SIZE);
+		SourceDataNode sourceDataNode = null;
+		SourceDataTypeNode sourceDataTypeNode = null;
+		
+		File file = new File(fullPahtFileName);
+		
+		String fileName = file.getName();
+		if (null == file || !file.exists() || !file.canRead()) {
+			LOG.warn("filename" + fileName + " not (exits or read or text file)!");
+			return false;
+		}
+		long fileSize = file.length() >> 20;
+		
+		String dataType = fileName.split("-")[1];
+		if (StringUtil.isEmpty(dataType)) {
+			LOG.warn("filename" + fileName + " split dataType is null !");
+			return false;
+		}
+		sourceDataTypeNode = m_hbaseConfig.getDataTypeNode(mainTableName, dataType);
+		if (null == sourceDataTypeNode) {
+			LOG.error("filename: " + fileName + " data_type : " + dataType + " DataSource xml not define!" );
+			return false;
+		}
+		sourceDataNode = m_sourceDataConf.getSourceDataNode(dataType);
+		if (null == sourceDataNode) {
+			LOG.error("filename: " + fileName + " data_type : " + dataType + " HbaseTable xml not define!" );
+			return false;
+		}
+		
+		String splitStr = m_sourceDataConf.getM_separator();
+		int cellCount = sourceDataNode.getCellCount();
+		
+		RowKey rowKeyNode = sourceDataTypeNode.getRowKey();
+		TimeStamp timeStampNode = sourceDataTypeNode.getTimestamp();
+		IndexNode indexNode = sourceDataTypeNode.getIndexNode();
+		CFNode cfNode = sourceDataTypeNode.getcFnode();
+
+		long lineNo = 0;
+		long successLine = 0; 
+		BufferedReader br = null;
+		String line = null;
+		try {
+			br = new BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file)), 4003167);
+			StringBuffer rowKeyValue = new StringBuffer();
+			StringBuffer timeStampValue = new StringBuffer();
+			StringBuffer indexValue = new StringBuffer();
+			StringBuffer cFCQvalues = new StringBuffer();
+			while (null != (line = br.readLine())) {
+				if (mainList.size() >= BATCH_SIZE) {
+					batchCommit(mainList, indexList, fileName);
+				}
+				lineNo++;
+				String[] record = line.split(splitStr);
+				if (cellCount != record.length) {
+					LOG.warn("filename: " + fileName + " lineNo: " + lineNo  + " lineContent: " + line
+							+ " sourceData Field size: "	+ record.length + " config : " + cellCount);
+					continue;
+				}
+				
+				makeTimeStamp(timeStampNode, record, timeStampValue);
+				putMainTalbe(rowKeyNode, record, rowKeyValue, timeStampValue, cfNode, cFCQvalues, mainList);
+				putIndexTable(indexNode, record, indexValue, timeStampValue, rowKeyValue, indexList);
+				
+				rowKeyValue.setLength(0);
+				timeStampValue.setLength(0);
+				indexValue.setLength(0);
+				cFCQvalues.setLength(0);
+				successLine++;
+			}
+		} catch (FileNotFoundException e) {
+			LOG.error("filename: " + fileName + " lineNo: " + lineNo + " line: " + line, e);
+			return false;
+		} catch (IOException e) {
+			LOG.error("filename: " + fileName + " lineNo: " + lineNo + " line: " + line, e);
+			return false;
+		} finally {
+			try {
+				br.close();
+			} catch (IOException e) {
+				LOG.error("filename: " + fileName + " BufferReader close error!", e);
+				return false;
+			}
+		}
+		batchCommit(mainList, indexList, fileName);
+		LOG.info("complete filename: " + fileName + " [totalLine: " + lineNo + " sucessLine: " 
+				+ successLine + " fileSize: " + fileSize + "M costTime: " + (Time.now()-startTime)/1000 + " s]");
+		return true;
+	}
+	
+	/*
+	 * 向hbase批量提交方法
+	 * 参数 1 mainList：主表列
+	 * 参数 2 indexList：索引表列
+	 * 参数 3 fileName: 处理的文件名
+	 * 返回值：无
+	 */
+	private static void batchCommit(List<Row> mainList, List<Row> indexList, String fileName) {
+		if (mainList.size() > 0 && indexList.size() > 0) {
+			try {
+				m_mainTable.batch(mainList, null);
+				m_indexTable.batch(indexList, null);
+			} catch (IOException | InterruptedException e) {
+				LOG.error("filename: " + fileName + " commit error!", e);
+			} finally {
+				mainList.clear();
+				indexList.clear();
+			}
+		}
+	}
+
+	/*
+	 *  主表put组装方法
+		参数 1 rowKeyNode：rowkey 规则
+		参数 2 record ：行数据
+		参数 3 rowKeyValue ：rowkey 返回值
+		参数 4 timeStampValue ： 时间戳 
+		参数 5 cfNode ：column family 规则
+		参数 6 cFCQvalues ：cfcq 返回值
+		参数 7 mainList ： put 操作链表
+	 */
+	private static boolean putMainTalbe(RowKey rowKeyNode, String[] record,
+			StringBuffer rowKeyValue, StringBuffer timeStampValue,
+			CFNode cfNode, StringBuffer cFCQvalues, List<Row> mainList) {
+		makeRowKey(rowKeyNode, record, rowKeyValue);
+		Put MainPut = new Put(Bytes.toBytes(rowKeyValue.toString()));
+		Set<CQNode> cfCqSets = cfNode.getCqSets();
+		for (CQNode cfCq : cfCqSets) {
+			makeCFCQValues(cfCq, record, cFCQvalues);
+			MainPut.add(Bytes.toBytes("f"), Bytes.toBytes("1q"),
+					Long.valueOf(timeStampValue.toString()),
+					Bytes.toBytes(cFCQvalues.toString()));
+		}
+		MainPut.setDurability(m_wal);
+		mainList.add(MainPut);
+		return true;
+	}
+
+	/*
+	 *  索引表put组装方法
+		参数 1 indexNode：索引表rowkey 规则
+		参数 2 record ：行数据
+		参数 3 rowKeyValue ：rowkey 返回值
+		参数 4 timeStampValue ： 时间戳 
+		参数 5 rowKeyValue ：索引表cq 值（也就是主表的rowkey）
+		参数 6 mainList ： put 操作链表
+	 */
+	private static void putIndexTable(IndexNode indexNode, String[] record,
+			StringBuffer indexValue, StringBuffer timeStampValue,
+			StringBuffer rowKeyValue, List<Row> indexList) {
+		Set<CQNode> indexCqSets = indexNode.getCqSets();
+		int id = 1;
+		for (CQNode indexCq : indexCqSets) {
+			boolean ret = makeIndex(indexCq, record, indexValue, id++);
+			if (!ret) {
+				continue;
+			}
+			LOG.debug("*******************  index row key = " + indexValue);
+			Put IdxPut = new Put(Bytes.toBytes(indexValue.toString()));
+			IdxPut.add(Bytes.toBytes("f"), Bytes.toBytes("v"),
+					Long.valueOf(timeStampValue.toString()),
+					Bytes.toBytes(rowKeyValue.toString()));
+			IdxPut.setDurability(m_wal);
+			indexList.add(IdxPut);
+			indexValue.setLength(0);
+		}
+	}
+
+	/*
+	 *  主表rowkey 生成方法
+		参数 1 rowKeyNode 主表rowkey规则
+		参数 2 record 行数据值
+		参数 3 rowKey 主表rowkey返回值
+	 */
+	private static void makeRowKey(RowKey rowKeyNode, String[] record, StringBuffer rowKey) {
+		int [] fields = rowKeyNode.getFieldIndex();
+		FieldNode[] fieldNodes = rowKeyNode.getFieldList();
+		int j = 0;
+		for (int i : fields) {		
+			getFieldValue(fieldNodes[j].getOption(), record, i, fieldNodes[j], rowKey);
+			j++;
+		}
+	}
+
+	/*
+	 * 	时间戳生成方法
+		参数 1 timeStampNode 时间戳规则
+		参数 2 record 行数据值
+		参数 3 timeStamp 时间戳返回值
+	 */
+	private static void makeTimeStamp(TimeStamp timeStampNode, String[] record, StringBuffer timeStamp) {
+		int fieldIndex = timeStampNode.getFieldIndex();
+		timeStamp.append(record[fieldIndex] + "000");
+		LOG.debug("timeStamp: " + timeStamp);
+	}
+
+	/*
+	 * 	索引表rowkey成方法
+		参数 1 indexCq 索引表rowkey规则
+		参数 2 record 行数据值
+		参数 3 index 索引表rowkey返回值
+		参数 4 id 索引编号
+		返回值：成功与否
+	 */
+	private static boolean makeIndex(CQNode indexCq, String[] record, StringBuffer index, int id) {
+		int [] fields = indexCq.getFieldIndex();
+		FieldNode[] fieldNodes = indexCq.getFieldList();
+		int j = 0;
+
+		for (int i : fields) {
+			if (0 == j) {
+				StringBuffer tmp = new StringBuffer();
+				getFieldValue(fieldNodes[j].getOption(), record, i, fieldNodes[j], tmp);
+				if (tmp.length() < 3) {
+					return false;
+				}
+				index.append(id);
+				index.append(indexCq.getSeperator());
+				index.append(tmp);
+			} else {
+				index.append(indexCq.getSeperator());
+				getFieldValue(fieldNodes[j].getOption(), record, i, fieldNodes[j], index);
+			}
+			j++;
+		}
+		LOG.debug("index: " + index);
+		return true;
+	}
+
+	/*
+	 * 	主表cq value 生成方法
+		参数 1 cfCq 主表cfcq规则
+		参数 2 record 行数据值
+		参数 3 cfcq 主表cfcq返回值
+	 */
+	private static void makeCFCQValues(CQNode cfCq, String[] record, StringBuffer cfcq) {
+		int [] fields = cfCq.getFieldIndex();
+		FieldNode[] fieldNodes = cfCq.getFieldList();
+		int j = 0;
+		for (int i : fields) {
+			getFieldValue(fieldNodes[j].getOption(), record, i, fieldNodes[j], cfcq);
+			cfcq.append(cfCq.getSeperator());
+			j++;
+		}
+		cfcq.deleteCharAt(cfcq.length() - 1);
+		LOG.debug("cfcq: " + cfcq);
+	}
+	
+	/*
+	 * 	get field 方法
+		参数 1 option field 类型
+		参数 2 record 行数据值
+		参数 3 index 列对应的下标值
+	 */
+	private static void getFieldValue(Option option, String[] record, int index, 
+			FieldNode fieldNode, StringBuffer value) {
+		switch (option) {
+		case NORMAL:
+			value.append(record[index]);
+			break;
+		case CONST:
+			value.append(fieldNode.getConstValue());
+			break;
+		case SECTION:
+			value.append(m_constIni.get(fieldNode.getSection(), record[index]));
+			break;
+		case REVERSSE:
+			value.append(new StringBuffer(record[index]).reverse());
+			break;
+		default:
+			LOG.fatal("Field option is error, please check hbase xml");
+			break;
+		}
+	}
+
+	/*
+	 * test method
+	 */
+	public static void main(String[] args) {
+		try {
+			String file = "/home/xwb/data/201411241255-gbiups2gpaging-207-139896840615680.DAT";
+			HbaseOperator.process(file);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
